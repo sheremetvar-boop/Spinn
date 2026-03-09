@@ -255,3 +255,4 @@ if (currentUser) {
     // Небольшая задержка, чтобы облако успело ответить при старте
     setTimeout(() => enterApp(currentUser), 500);
 }
+
