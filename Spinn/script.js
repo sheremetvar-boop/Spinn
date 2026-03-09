@@ -1,4 +1,4 @@
-// 1. Инициализация Firebase
+// --- ИНИЦИАЛИЗАЦИЯ FIREBASE ---
 const firebaseConfig = {
     apiKey: "AIzaSyCdxe_1o1qOe-Q0S9VqaanNt-ts-avioCc",
     authDomain: "spinn-f9913.firebaseapp.com",
@@ -12,19 +12,20 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 let users = {}, globalShop = [], orders = {}, isSpinning = false, currentRotation = 0;
 let currentUser = JSON.parse(localStorage.getItem('wheel_session')) || null;
 
 const prizes = [
-    { value: 1,  chance: 3,    color: '#4f46e5' },
-    { value: 5,  chance: 25,   color: '#6366f1' },
-    { value: 10, chance: 38,   color: '#818cf8' },
-    { value: 20, chance: 9.5,  color: '#4f46e5' },
-    { value: 25, chance: 13,   color: '#6366f1' },
+    { value: 1, chance: 3, color: '#4f46e5' },
+    { value: 5, chance: 25, color: '#6366f1' },
+    { value: 10, chance: 38, color: '#818cf8' },
+    { value: 20, chance: 9.5, color: '#4f46e5' },
+    { value: 25, chance: 13, color: '#6366f1' },
     { value: 30, chance: 11.5, color: '#818cf8' }
 ];
 
-// Слушатель базы данных
+// --- БАЗА ДАННЫХ И СИНХРОНИЗАЦИЯ ---
 db.ref('/').on('value', (snapshot) => {
     const data = snapshot.val() || {};
     users = data.users || {};
@@ -42,7 +43,7 @@ function saveAll() {
     db.ref('shop').set(globalShop);
 }
 
-// Рендеринг колеса
+// --- ЛОГИКА КОЛЕСА ---
 function createWheel() {
     const container = document.getElementById('wheel-canvas-container');
     if (!container) return;
@@ -50,7 +51,7 @@ function createWheel() {
     let svg = `<svg id="wheel-svg" viewBox="0 0 100 100" style="width:100%; height:100%; overflow:visible;">`;
     let cumulative = 0;
     
-    prizes.forEach((p) => {
+    prizes.forEach(p => {
         const start = cumulative;
         cumulative += p.chance;
         const x1 = 50 + 50 * Math.cos(2 * Math.PI * start / 100);
@@ -60,40 +61,50 @@ function createWheel() {
         
         svg += `<path d="M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z" fill="${p.color}" stroke="#fff" stroke-width="0.3"/>`;
         
-        // Подписи секторов
-        const midAngle = (start + (p.chance / 2)) * (2 * Math.PI / 100);
-        const tx = 50 + 35 * Math.cos(midAngle);
-        const ty = 50 + 35 * Math.sin(midAngle);
-        const rotate = (midAngle * 180 / Math.PI) + 90;
-        svg += `<text x="${tx}" y="${ty}" fill="white" font-size="5" font-weight="bold" text-anchor="middle" transform="rotate(${rotate}, ${tx}, ${ty})">${p.value}</text>`;
+        const mid = (start + p.chance / 2) * (2 * Math.PI / 100);
+        const tx = 50 + 35 * Math.cos(mid);
+        const ty = 50 + 35 * Math.sin(mid);
+        svg += `<text x="${tx}" y="${ty}" fill="white" font-size="5" text-anchor="middle" transform="rotate(${(mid*180/Math.PI)+90}, ${tx}, ${ty})">${p.value}</text>`;
     });
     
     container.innerHTML = svg + `</svg>`;
 }
 
-// Вращение
 function spin() {
     if (isSpinning || !currentUser || currentUser.spins <= 0) return;
     isSpinning = true;
     currentUser.spins--;
     saveAll();
 
-    const wheelSvg = document.getElementById('wheel-svg');
-    const winnerIdx = Math.floor(Math.random() * prizes.length);
-    currentRotation += 1800 + (360 - (winnerIdx * (360 / prizes.length)));
+    const w = document.getElementById('wheel-svg');
+    const idx = Math.floor(Math.random() * prizes.length);
+    currentRotation += 1800 + (360 - (idx * (360 / prizes.length)));
     
-    wheelSvg.style.transition = "transform 4s cubic-bezier(0.1, 0, 0.2, 1)";
-    wheelSvg.style.transform = `rotate(${currentRotation}deg)`;
+    w.style.transition = "transform 4s ease-out";
+    w.style.transform = `rotate(${currentRotation}deg)`;
 
     setTimeout(() => {
         isSpinning = false;
-        currentUser.balance += prizes[winnerIdx].value;
+        currentUser.balance += prizes[idx].value;
         saveAll();
-        alert(`Поздравляем! Вы выиграли ${prizes[winnerIdx].value} 🪙`);
+        alert("Выиграл: " + prizes[idx].value);
     }, 4000);
 }
 
-// Авторизация
+// --- ЛОГИКА ИНТЕРФЕЙСА И АДМИНКИ ---
+function show(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function enterApp() {
+    document.getElementById('login-page').classList.remove('active');
+    document.getElementById('main-nav').style.display = 'flex';
+    document.getElementById('user-display-name').innerText = currentUser.username;
+    show('wheel-page');
+    updateUI();
+}
+
 function login() {
     const name = document.getElementById('username-input').value.trim();
     const pass = document.getElementById('password-input').value.trim();
@@ -115,51 +126,26 @@ function login() {
     }
 }
 
-function enterApp() {
-    document.getElementById('login-page').classList.remove('active');
-    document.getElementById('main-nav').style.display = 'flex';
-    document.getElementById('user-display-name').innerText = currentUser.username;
-    show('wheel-page');
-    updateUI();
-}
-
-function show(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-
-// Обновление интерфейса
 function updateUI() {
-    if (!currentUser) return;
-    document.getElementById('balance').innerText = currentUser.balance;
-    document.getElementById('spins').innerText = currentUser.spins;
+    document.getElementById('balance').innerText = currentUser?.balance || 0;
+    document.getElementById('spins').innerText = currentUser?.spins || 0;
 
-    // Магазин
     const shopList = document.getElementById('shop-items-list');
-    if (shopList) {
-        shopList.innerHTML = globalShop.map((item, idx) => `
-            <div class="card">
-                <h4>${item.name}</h4>
-                <button class="btn-primary" onclick="buy('${item.name}', ${item.price})">${item.price} 🪙</button>
-            </div>`).join('');
-    }
+    if (shopList) shopList.innerHTML = globalShop.map((item, i) => `
+        <div class="card">
+            <h4>${item.name}</h4>
+            <button onclick="buy('${item.name}', ${item.price})">${item.price} 🪙</button>
+        </div>`).join('');
 
-    // Инвентарь игрока
-    const invList = document.getElementById('inventory-list');
-    if (invList) {
-        const myOrders = Object.values(orders).filter(o => o.username === currentUser.username);
-        invList.innerHTML = myOrders.map(o => `<div class="card">🎁 ${o.item}</div>`).join('') || 'У вас пока нет товаров';
-    }
+    const adminShop = document.getElementById('admin-shop-manage');
+    if (adminShop) adminShop.innerHTML = globalShop.map((item, i) => `
+        <div style="margin: 5px; border-bottom: 1px solid #444;">
+            ${item.name} <button onclick="adminRemoveItem(${i})">Удалить</button>
+        </div>`).join('');
 
-    // Заказы в админке
     const adminOrders = document.getElementById('admin-orders-list');
-    if (adminOrders) {
-        adminOrders.innerHTML = Object.entries(orders).map(([id, o]) => `
-            <div class="admin-item-row" style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                <span>${o.username}: ${o.item}</span>
-                <button onclick="db.ref('orders/${id}').remove()">✅</button>
-            </div>`).join('');
-    }
+    if (adminOrders) adminOrders.innerHTML = Object.entries(orders).map(([id, o]) => `
+        <div>${o.username}: ${o.item} <button onclick="db.ref('orders/${id}').remove()">✅</button></div>`).join('');
 }
 
 function buy(name, price) {
@@ -167,50 +153,20 @@ function buy(name, price) {
         currentUser.balance -= price;
         db.ref('orders').push({ username: currentUser.username, item: name });
         saveAll();
-        alert("Покупка совершена!");
-    } else alert("Недостаточно монет");
+    } else alert("Мало монет!");
 }
 
-// Админка
-function checkAdmin() {
-    if (prompt("Введите пароль администратора:") === "qws853") show('admin-page');
-}
-
-function adminCheckUser() {
-    const nick = document.getElementById('admin-target-nick').value.trim();
-    const st = document.getElementById('admin-status');
-    if (users[nick]) {
-        st.innerText = `Ник: ${nick} | Баланс: ${users[nick].balance} | Спины: ${users[nick].spins}`;
-    } else st.innerText = "Пользователь не найден";
-}
-
-function adminAdjustBalance() {
-    const nick = document.getElementById('admin-target-nick').value.trim();
-    const amt = parseInt(document.getElementById('admin-amount').value);
-    if (users[nick] && !isNaN(amt)) {
-        users[nick].balance += amt;
-        saveAll();
-        adminCheckUser();
-    }
-}
-
-function adminGiveSpin() {
-    const nick = document.getElementById('admin-target-nick').value.trim();
-    if (users[nick]) {
-        users[nick].spins++;
-        saveAll();
-        adminCheckUser();
-    }
+function adminRemoveItem(idx) {
+    globalShop.splice(idx, 1);
+    saveAll();
 }
 
 function adminAddItem() {
-    const name = document.getElementById('new-item-name').value;
-    const price = parseInt(document.getElementById('new-item-price').value);
-    if (name && !isNaN(price)) {
-        globalShop.push({ name, price });
-        saveAll();
-        alert("Товар добавлен!");
-    }
+    globalShop.push({ 
+        name: document.getElementById('new-item-name').value, 
+        price: parseInt(document.getElementById('new-item-price').value) 
+    });
+    saveAll();
 }
 
 function logout() {
@@ -218,24 +174,11 @@ function logout() {
     location.reload();
 }
 
+function checkAdmin() {
+    if (prompt("Пароль:") === "qws853") show('admin-page');
+}
+
 window.onload = () => {
     createWheel();
     if (currentUser) enterApp();
 };
-
-// Функция переключения страниц
-function show(id) {
-    // 1. Скрываем все страницы (убираем класс active)
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => {
-        page.classList.remove('active');
-    });
-
-    // 2. Показываем нужную страницу (добавляем класс active)
-    const targetPage = document.getElementById(id);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    } else {
-        console.error("Страница с id '" + id + "' не найдена!");
-    }
-}
