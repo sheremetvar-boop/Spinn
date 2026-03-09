@@ -1,3 +1,4 @@
+// 1. КОНФИГУРАЦИЯ FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyCdxe_1o1qOe-Q0S9VqaanNt-ts-avioCc",
   authDomain: "spinn-f9913.firebaseapp.com",
@@ -7,13 +8,15 @@ const firebaseConfig = {
   messagingSenderId: "694847076025",
   appId: "1:694847076025:web:e10ccd43890216b5200d68"
 };
-// общие пользователи и общий магазин
-let users = JSON.parse(localStorage.getItem('wheel_users')) || {};
-let globalShop = JSON.parse(localStorage.getItem('wheel_shop')) || [
-    { name: 'Стартовый меч', price: 50 }
-];
-let currentUser = JSON.parse(localStorage.getItem('wheel_session')) || null;
 
+// Инициализация облака
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Глобальные переменные
+let users = {};
+let globalShop = [];
+let currentUser = JSON.parse(localStorage.getItem('wheel_session')) || null;
 let isSpinning = false;
 let currentRotation = 0;
 
@@ -26,9 +29,110 @@ const prizes = [
     { value: 30, chance: 11.5, color: '#818cf8' }
 ];
 
-// --- ИНИЦИАЛИЗАЦИЯ КОЛЕСА ---
+// --- ГЛАВНАЯ СИНХРОНИЗАЦИЯ С ОБЛАКОМ ---
+// Этот блок следит за изменениями в базе в реальном времени
+db.ref('/').on('value', (snapshot) => {
+    const data = snapshot.val() || {};
+    users = data.users || {};
+    globalShop = data.shop || [{ name: 'Стартовый меч', price: 50 }];
+    
+    // Если мы вошли в аккаунт, обновляем свои данные из облака
+    if (currentUser && users[currentUser.username]) {
+        currentUser = users[currentUser.username];
+        localStorage.setItem('wheel_session', JSON.stringify(currentUser));
+    }
+    updateUI();
+});
+
+// Функция записи в облако
+function saveAll() {
+    db.ref('users').set(users);
+    db.ref('shop').set(globalShop);
+}
+
+// --- ЛОГИКА ВХОДА ---
+function login() {
+    const name = document.getElementById('username-input').value.trim();
+    const pass = document.getElementById('password-input').value.trim();
+    const err = document.getElementById('login-error');
+
+    if (name.length < 2 || pass.length < 3) return;
+
+    if (!users[name]) {
+        // Регистрация нового игрока
+        users[name] = { 
+            username: name, 
+            password: pass, 
+            balance: 0, 
+            spins: 0, 
+            lastLogin: Date.now() 
+        };
+        saveAll();
+        enterApp(users[name]);
+    } else {
+        // Проверка пароля существующего
+        if (users[name].password === pass) {
+            users[name].lastLogin = Date.now();
+            saveAll();
+            enterApp(users[name]);
+        } else {
+            err.innerText = "Неверный пароль или имя.";
+            err.style.display = "block";
+        }
+    }
+}
+
+function enterApp(userData) {
+    currentUser = userData;
+    localStorage.setItem('wheel_session', JSON.stringify(currentUser));
+    document.getElementById('login-page').classList.remove('active');
+    document.getElementById('main-nav').style.display = 'flex';
+    show('wheel-page');
+}
+
+function logout() {
+    localStorage.removeItem('wheel_session');
+    location.reload();
+}
+
+// --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ---
+function updateUI() {
+    if (!currentUser) return;
+    
+    // Принудительно держим темную тему (так как кнопку удалили)
+    document.body.className = "dark-theme";
+
+    document.getElementById('balance').innerText = currentUser.balance;
+    document.getElementById('spins').innerText = currentUser.spins;
+    document.getElementById('user-display-name').innerText = currentUser.username;
+    
+    // Магазин для игроков
+    const shopList = document.getElementById('shop-items-list');
+    if (shopList) {
+        shopList.innerHTML = globalShop.map(item => `
+            <div class="shop-item card">
+                <h4>${item.name}</h4>
+                <button onclick="buy('${item.name}', ${item.price})">${item.price} 🪙</button>
+            </div>
+        `).join('');
+    }
+
+    // Магазин в админке
+    const adminShopList = document.getElementById('admin-shop-manage');
+    if (adminShopList) {
+        adminShopList.innerHTML = globalShop.map((item, index) => `
+            <div class="admin-item-row">
+                <span>${item.name} (${item.price}🪙)</span>
+                <button onclick="adminRemoveItem(${index})">❌</button>
+            </div>
+        `).join('');
+    }
+}
+
+// --- ЛОГИКА КОЛЕСА ---
 function createWheel() {
     const container = document.getElementById('wheel-canvas-container');
+    if (!container) return;
     let cumulativePercent = 0;
     const paths = prizes.map(p => {
         const startPercent = cumulativePercent;
@@ -48,88 +152,13 @@ function getCoordinatesForPercent(percent) {
     return [Math.cos(2 * Math.PI * percent), Math.sin(2 * Math.PI * percent)];
 }
 
-// --- ЛОГИКА ВХОДА ---
-function login() {
-    const name = document.getElementById('username-input').value.trim();
-    const pass = document.getElementById('password-input').value.trim();
-    if (name.length < 2 || pass.length < 3) return;
-
-    if (!users[name]) {
-        users[name] = { username: name, password: pass, balance: 0, spins: 0, lastLogin: Date.now() };
-        saveAll();
-        enterApp(users[name]);
-    } else {
-        if (users[name].password === pass) {
-            users[name].lastLogin = Date.now();
-            saveAll();
-            enterApp(users[name]);
-        } else {
-            const err = document.getElementById('login-error');
-            err.innerText = "Неверный пароль или имя пользователя.";
-            err.style.display = "block";
-        }
-    }
-}
-
-function enterApp(userData) {
-    currentUser = userData;
-    localStorage.setItem('wheel_session', JSON.stringify(currentUser));
-    document.getElementById('login-page').classList.remove('active');
-    document.getElementById('main-nav').style.display = 'flex';
-    show('wheel-page');
-    updateUI();
-}
-
-function logout() {
-    currentUser = null;
-    localStorage.removeItem('wheel_session');
-    location.reload();
-}
-
-// --- ОБНОВЛЕНИЕ ИНТЕРФЕЙСА ---
-function updateUI() {
-    if (!currentUser) return;
-    
-    // Синхронизируем currentUser с базой (на случай если админ изменил баланс)
-    currentUser = users[currentUser.username];
-    localStorage.setItem('wheel_session', JSON.stringify(currentUser));
-
-    document.getElementById('balance').innerText = currentUser.balance;
-    document.getElementById('spins').innerText = currentUser.spins;
-    document.getElementById('user-display-name').innerText = currentUser.username;
-    
-    // Рендер ОБЩЕГО магазина для игрока
-    const shopList = document.getElementById('shop-items-list');
-    shopList.innerHTML = globalShop.map(item => `
-        <div class="shop-item card">
-            <h4>${item.name}</h4>
-            <button onclick="buy('${item.name}', ${item.price})">${item.price} 🪙</button>
-        </div>
-    `).join('');
-
-    // Рендер магазина в админке
-    const adminShopList = document.getElementById('admin-shop-manage');
-    if(adminShopList) adminShopList.innerHTML = globalShop.map((item, index) => `
-        <div class="admin-item-row">
-            <span>${item.name} (${item.price}🪙)</span>
-            <button onclick="adminRemoveItem(${index})">❌</button>
-        </div>
-    `).join('');
-}
-
-function saveAll() {
-    if (currentUser) users[currentUser.username] = currentUser;
-    localStorage.setItem('wheel_users', JSON.stringify(users));
-    localStorage.setItem('wheel_shop', JSON.stringify(globalShop));
-}
-
-// --- КОЛЕСО ---
 function spin() {
     if (isSpinning || currentUser.spins <= 0) return;
     isSpinning = true;
+    
+    // Отнимаем спин и сохраняем в облако
     currentUser.spins--;
     saveAll();
-    updateUI();
 
     const wheelSvg = document.getElementById('wheel-svg');
     const rand = Math.random() * 100;
@@ -155,7 +184,6 @@ function spin() {
         currentUser.balance += winner.value;
         document.getElementById('spin-result').innerText = `Выпало: +${winner.value} 🪙`;
         saveAll();
-        updateUI();
     }, 4000);
 }
 
@@ -165,17 +193,15 @@ function buy(name, price) {
         currentUser.balance -= price;
         alert(`Вы купили: ${name}`);
         saveAll(); 
-        updateUI();
     } else alert("Недостаточно средств");
 }
 
 function show(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    document.getElementById('app-container').scrollTop = 0;
 }
 
-// --- АДМИНКА ---
+// --- АДМИН-ПАНЕЛЬ ---
 function checkAdmin() { if (prompt("Пароль админа:") === "qws853") show('admin-page'); }
 
 function adminCheckUser() {
@@ -184,7 +210,10 @@ function adminCheckUser() {
     if (users[nick]) { 
         st.innerText = `Ник: ${nick} | Баланс: ${users[nick].balance} | Спины: ${users[nick].spins}`; 
         st.style.color = "#4ade80";
-    } else { st.innerText = "Пользователь не найден"; st.style.color = "red"; }
+    } else { 
+        st.innerText = "Пользователь не найден"; 
+        st.style.color = "red"; 
+    }
 }
 
 function adminAdjustBalance() {
@@ -193,7 +222,6 @@ function adminAdjustBalance() {
     if (users[nick] && !isNaN(amount)) {
         users[nick].balance += amount;
         saveAll();
-        updateUI();
         adminCheckUser();
     }
 }
@@ -203,7 +231,6 @@ function adminGiveSpin() {
     if (users[nick]) {
         users[nick].spins++;
         saveAll();
-        updateUI();
         adminCheckUser();
     }
 }
@@ -214,44 +241,17 @@ function adminAddItem() {
     if (n && p) {
         globalShop.push({ name: n, price: p });
         saveAll();
-        updateUI();
     }
 }
 
 function adminRemoveItem(i) {
     globalShop.splice(i, 1);
     saveAll();
-    updateUI();
 }
 
-// Запуск
+// Запуск при загрузке
 createWheel();
-if (currentUser) enterApp(currentUser);
-// Автоматическое обновление при изменении данных в других вкладках
-window.addEventListener('storage', (event) => {
-    // Если изменились пользователи или магазин
-    if (event.key === 'wheel_users' || event.key === 'wheel_shop') {
-        // Заново подгружаем данные из хранилища
-        users = JSON.parse(localStorage.getItem('wheel_users')) || {};
-        globalShop = JSON.parse(localStorage.getItem('wheel_shop')) || [];
-        
-        // Обновляем сессию текущего пользователя из обновленной базы
-        if (currentUser && users[currentUser.username]) {
-            currentUser = users[currentUser.username];
-            localStorage.setItem('wheel_session', JSON.stringify(currentUser));
-        }
-        
-        // Перерисовываем интерфейс (баланс, магазин, админку)
-        updateUI();
-        console.log("Данные синхронизированы!");
-    }
-});
-
-// Дополнительно: быстрый "авто-рефреш" внутри одной вкладки
-// Чтобы админские правки сразу применялись везде, вызываем updateUI чаще
-setInterval(() => {
-    if (!isSpinning) { // Не обновляем во время кручения колеса, чтобы не сбить анимацию
-        updateUI();
-    }
-
-}, 3000); // Проверка раз в 3 секунды
+if (currentUser) {
+    // Небольшая задержка, чтобы облако успело ответить при старте
+    setTimeout(() => enterApp(currentUser), 500);
+}
