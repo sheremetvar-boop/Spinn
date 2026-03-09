@@ -7,7 +7,6 @@ const firebaseConfig = {
   storageBucket: "spinn-f9913.firebasestorage.app",
   messagingSenderId: "694847076025",
   appId: "1:694847076025:web:e10ccd43890216b5200d68"
-
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -26,30 +25,24 @@ const prizes = [
     { value: 20, chance: 9.5,  color: '#4f46e5' },
     { value: 25, chance: 13,   color: '#6366f1' },
     { value: 30, chance: 11.5, color: '#818cf8' }
-
 ];
 
 db.ref('/').on('value', (snapshot) => {
     const data = snapshot.val() || {};
     users = data.users || {};
     globalShop = data.shop || [{ name: 'Стартовый меч', price: 50 }];
-
+    
     if (currentUser && users[currentUser.username]) {
         currentUser = users[currentUser.username];
         localStorage.setItem('wheel_session', JSON.stringify(currentUser));
-
     }
-
     updateUI();
-
 });
 
 function saveAll() {
     db.ref('users').set(users);
     db.ref('shop').set(globalShop);
 }
-
-
 
 // --- ЛОГИКА ВХОДА ---
 function login() {
@@ -58,26 +51,17 @@ function login() {
     if (name.length < 2 || pass.length < 3) return;
 
     if (!users[name]) {
-
         users[name] = { username: name, password: pass, balance: 0, spins: 0, lastLogin: Date.now() };
         saveAll();
         enterApp(users[name]);
-
     } else if (users[name].password === pass) {
-
         users[name].lastLogin = Date.now();
         saveAll();
         enterApp(users[name]);
-
     } else {
-
         document.getElementById('login-error').style.display = "block";
-
     }
-
 }
-
-
 
 function enterApp(userData) {
     currentUser = userData;
@@ -85,10 +69,7 @@ function enterApp(userData) {
     document.getElementById('login-page').classList.remove('active');
     document.getElementById('main-nav').style.display = 'flex';
     show('wheel-page');
-
 }
-
-
 
 function updateUI() {
     if (!currentUser) return;
@@ -96,9 +77,7 @@ function updateUI() {
     document.getElementById('balance').innerText = currentUser.balance;
     document.getElementById('spins').innerText = currentUser.spins;
     document.getElementById('user-display-name').innerText = currentUser.username;
-
     
-
     const shopList = document.getElementById('shop-items-list');
     if (shopList) shopList.innerHTML = globalShop.map(item => `
         <div class="shop-item card">
@@ -106,17 +85,13 @@ function updateUI() {
             <button onclick="buy('${item.name}', ${item.price})">${item.price} 🪙</button>
         </div>`).join('');
 
-
     const adminShopList = document.getElementById('admin-shop-manage');
     if (adminShopList) adminShopList.innerHTML = globalShop.map((item, index) => `
         <div class="admin-item-row">
             <span>${item.name} (${item.price}🪙)</span>
             <button onclick="adminRemoveItem(${index})">❌</button>
         </div>`).join('');
-
 }
-
-
 
 // --- КОЛЕСО И ПОКУПКИ ---
 function buy(name, price) {
@@ -128,8 +103,6 @@ function buy(name, price) {
         alert(`Куплено: ${name}`);
     } else alert("Недостаточно средств");
 }
-
-
 
 function spin() {
     if (isSpinning || currentUser.spins <= 0) return;
@@ -144,14 +117,11 @@ function spin() {
         cumulative += prizes[i].chance;
         if (rand <= cumulative) { winnerIndex = i; break; }
     }
-
     
-
     const winner = prizes[winnerIndex];
     currentRotation += 1800 + (360 - (winnerIndex * (360/prizes.length)));
     wheelSvg.style.transition = "transform 4s cubic-bezier(0.1, 0, 0.2, 1)";
     wheelSvg.style.transform = `rotate(${currentRotation}deg)`;
-
 
     setTimeout(() => {
         isSpinning = false;
@@ -159,7 +129,6 @@ function spin() {
         saveAll();
         alert(`Выпало: +${winner.value} 🪙`);
     }, 4000);
-
 }
 
 // --- АДМИНКА ---
@@ -171,17 +140,11 @@ function adminAddItem() {
         saveAll();
         alert("Товар добавлен!");
     }
-
 }
 
-
-
 function adminRemoveItem(i) {
-
     globalShop.splice(i, 1);
-
     saveAll();
-
 }
 
 function adminAdjustBalance() {
@@ -191,7 +154,6 @@ function adminAdjustBalance() {
         users[nick].balance += amount;
         saveAll();
         adminCheckUser();
-
     }
 }
 
