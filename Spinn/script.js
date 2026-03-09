@@ -43,9 +43,14 @@ function saveAll() {
 function createWheel() {
     const container = document.getElementById('wheel-canvas-container');
     if (!container) return;
-    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100">`;
+    
+    // Очищаем перед отрисовкой
+    container.innerHTML = ''; 
+    
+    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100" style="width:100%; height:100%;">`;
     let cumulative = 0;
-    prizes.forEach((p, i) => {
+    
+    prizes.forEach((p) => {
         const start = cumulative;
         cumulative += p.chance;
         const x1 = 50 + 50 * Math.cos(2 * Math.PI * start / 100);
@@ -54,7 +59,9 @@ function createWheel() {
         const y2 = 50 + 50 * Math.sin(2 * Math.PI * cumulative / 100);
         svg += `<path d="M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z" fill="${p.color}" />`;
     });
+    
     container.innerHTML = svg + `</svg>`;
+    console.log("Колесо отрисовано");
 }
 
 function spin() {
@@ -122,3 +129,4 @@ function adminAdjustBalance() { const nick = document.getElementById('admin-targ
 function adminGiveSpin() { const nick = document.getElementById('admin-target-nick').value.trim(); if (users[nick]) { users[nick].spins++; saveAll(); } }
 
 window.onload = () => { createWheel(); if (currentUser) enterApp(currentUser); };
+
