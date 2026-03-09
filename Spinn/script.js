@@ -43,39 +43,42 @@ function saveAll() {
 }
 
 // Рендеринг колеса
+let angleMap = []; 
+
 function createWheel() {
     const container = document.getElementById('wheel-canvas-container');
     if (!container) return;
-
-    // Время анимации здесь же: 3 секунды для баланса скорости
-    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100" style="width:100%; height:100%; transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);">`;
-    let cumulativeAngle = 0;
-
-    prizes.forEach((p) => {
-        const start = cumulativeAngle;
-        const segmentAngle = (p.chance / 100) * 360;
-        const end = start + segmentAngle;
-
-        // Рисуем сектор
+    
+    angleMap = []; // Очищаем карту углов
+    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100" style="width:100%; height:100%; transition: transform 3s cubic-bezier(0.1, 0.5, 0.2, 1);">`;
+    let cumulative = 0;
+    
+    prizes.forEach((p, i) => {
+        const start = cumulative;
+        const slice = (p.chance / 100) * 360;
+        const end = start + slice;
+        
+        // Запоминаем центр сектора для spin()
+        angleMap[i] = { start: start, end: end, mid: start + slice / 2 };
+        
+        // Отрисовка
         const x1 = 50 + 50 * Math.cos((start - 90) * Math.PI / 180);
         const y1 = 50 + 50 * Math.sin((start - 90) * Math.PI / 180);
         const x2 = 50 + 50 * Math.cos((end - 90) * Math.PI / 180);
         const y2 = 50 + 50 * Math.sin((end - 90) * Math.PI / 180);
-
+        
         svg += `<path d="M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z" fill="${p.color}" stroke="white" stroke-width="0.5"/>`;
-
-        // Текст
-        const midAngle = start + segmentAngle / 2;
-        const tx = 50 + 35 * Math.cos((midAngle - 90) * Math.PI / 180);
-        const ty = 50 + 35 * Math.sin((midAngle - 90) * Math.PI / 180);
+        
+        const midAngle = start + slice / 2;
+        const tx = 50 + 30 * Math.cos((midAngle - 90) * Math.PI / 180);
+        const ty = 50 + 30 * Math.sin((midAngle - 90) * Math.PI / 180);
         svg += `<text x="${tx}" y="${ty}" fill="white" font-size="5" text-anchor="middle" transform="rotate(${midAngle}, ${tx}, ${ty})">${p.value}</text>`;
-
-        cumulativeAngle = end;
+        
+        cumulative = end;
     });
     container.innerHTML = svg + `</svg>`;
 }
 
-// --- 2. Вращение с точным расчетом цели ---
 function spin() {
     if (isSpinning || !currentUser || currentUser.spins <= 0) return;
     isSpinning = true;
@@ -85,24 +88,21 @@ function spin() {
     const random = Math.random() * 100;
     let sum = 0;
     let winnerIdx = 0;
-
+    
     for (let i = 0; i < prizes.length; i++) {
-        if (random >= sum && random < sum + prizes[i].chance) {
+        sum += prizes[i].chance;
+        if (random <= sum) {
             winnerIdx = i;
             break;
         }
-        sum += prizes[i].chance;
     }
 
-    // Вычисляем, на какой угол нужно повернуть, чтобы центр сектора winnerIdx встал вверх
-    let startAngle = 0;
-    for(let i = 0; i < winnerIdx; i++) startAngle += (prizes[i].chance / 100) * 360;
-    const segmentAngle = (prizes[winnerIdx].chance / 100) * 360;
-    const targetAngle = startAngle + (segmentAngle / 2);
-
-    // 1800 (5 оборотов) + 360 - угол сектора
+    // БЕРЕМ ЦЕНТР ИЗ НАШЕЙ КАРТЫ (angleMap)
+    const targetAngle = angleMap[winnerIdx].mid;
+    
+    // Вращение: 1800 (5 оборотов) + 360 - целевой угол
     currentRotation = 1800 + (360 - targetAngle);
-
+    
     const wheelSvg = document.getElementById('wheel-svg');
     wheelSvg.style.transform = `rotate(${currentRotation}deg)`;
 
@@ -276,6 +276,7 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
 
 
 
