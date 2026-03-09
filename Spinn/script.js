@@ -200,12 +200,31 @@ function updateUI() {
     }
 }
 function buy(name, price) {
+    // 1. Проверяем баланс у текущего пользователя в локальном объекте
     if (currentUser.balance >= price) {
+        
+        // 2. Списываем баланс
         currentUser.balance -= price;
-        db.ref('orders').push({ username: currentUser.username, item: name });
+        
+        // 3. ОБЯЗАТЕЛЬНО обновляем баланс внутри глобального объекта users
+        // Иначе Firebase может перезаписать старое значение при синхронизации
+        if (users[currentUser.username]) {
+            users[currentUser.username].balance = currentUser.balance;
+        }
+
+        // 4. Добавляем заказ
+        db.ref('orders').push({ 
+            username: currentUser.username, 
+            item: name 
+        });
+        
+        // 5. Сохраняем все данные в базу
         saveAll();
+        
         alert("Покупка совершена!");
-    } else alert("Недостаточно монет");
+    } else {
+        alert("Недостаточно монет");
+    }
 }
 
 // Админка
@@ -276,6 +295,7 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
 
 
 
