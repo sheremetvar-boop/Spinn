@@ -222,3 +222,20 @@ window.onload = () => {
     createWheel();
     if (currentUser) enterApp();
 };
+
+// Функция переключения страниц
+function show(id) {
+    // 1. Скрываем все страницы (убираем класс active)
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => {
+        page.classList.remove('active');
+    });
+
+    // 2. Показываем нужную страницу (добавляем класс active)
+    const targetPage = document.getElementById(id);
+    if (targetPage) {
+        targetPage.classList.add('active');
+    } else {
+        console.error("Страница с id '" + id + "' не найдена!");
+    }
+}
