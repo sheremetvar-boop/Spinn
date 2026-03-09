@@ -179,3 +179,31 @@ function checkAdmin() { if (prompt("Пароль:") === "qws853") show('admin-pa
 function logout() { localStorage.removeItem('wheel_session'); location.reload(); }
 window.onload = () => { if (currentUser) enterApp(currentUser); };
 
+const container = document.getElementById('wheel-canvas-container');
+    if (!container) return;
+    
+    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100">`;
+    let cumulativePercent = 0;
+    
+    prizes.forEach((prize, i) => {
+        const start = cumulativePercent;
+        const percent = prize.chance;
+        cumulativePercent += percent;
+        
+        const x1 = 50 + 50 * Math.cos(2 * Math.PI * start / 100);
+        const y1 = 50 + 50 * Math.sin(2 * Math.PI * start / 100);
+        const x2 = 50 + 50 * Math.cos(2 * Math.PI * (start + percent) / 100);
+        const y2 = 50 + 50 * Math.sin(2 * Math.PI * (start + percent) / 100);
+        
+        svg += `<path d="M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z" fill="${prize.color}" />`;
+    });
+    
+    svg += `</svg>`;
+    container.innerHTML = svg;
+}
+
+// Вызываем отрисовку при запуске
+window.onload = () => { 
+    if (currentUser) enterApp(currentUser); 
+    createWheel(); 
+};
