@@ -131,10 +131,12 @@ function show(id) {
 // Обновление интерфейса
 function updateUI() {
     if (!currentUser) return;
+    
+    // 1. Обновление баланса и спинов
     document.getElementById('balance').innerText = currentUser.balance;
     document.getElementById('spins').innerText = currentUser.spins;
 
-    // Магазин
+    // 2. Отображение магазина для обычных игроков
     const shopList = document.getElementById('shop-items-list');
     if (shopList) {
         shopList.innerHTML = globalShop.map((item, idx) => `
@@ -144,14 +146,28 @@ function updateUI() {
             </div>`).join('');
     }
 
-    // Инвентарь игрока
+    // 3. Инвентарь игрока
     const invList = document.getElementById('inventory-list');
     if (invList) {
         const myOrders = Object.values(orders).filter(o => o.username === currentUser.username);
         invList.innerHTML = myOrders.map(o => `<div class="card">🎁 ${o.item}</div>`).join('') || 'У вас пока нет товаров';
     }
 
-    // Заказы в админке
+    // 4. Админ-панель: управление товарами
+    const adminShopManage = document.getElementById('admin-shop-manage');
+    if (adminShopManage) {
+        if (globalShop.length === 0) {
+            adminShopManage.innerHTML = '<p style="font-size: 0.8rem; opacity:0.5;">Магазин пуст</p>';
+        } else {
+            adminShopManage.innerHTML = globalShop.map((item, idx) => `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:8px; margin-top:5px; border-radius:5px;">
+                    <span>${item.name} — <b>${item.price} 🪙</b></span>
+                    <button onclick="adminRemoveItem(${idx})" style="background:#ff4444; border:none; color:white; padding:2px 8px; cursor:pointer;">Удалить</button>
+                </div>`).join('');
+        }
+    }
+
+    // 5. Админ-панель: заказы
     const adminOrders = document.getElementById('admin-orders-list');
     if (adminOrders) {
         adminOrders.innerHTML = Object.entries(orders).map(([id, o]) => `
@@ -161,7 +177,6 @@ function updateUI() {
             </div>`).join('');
     }
 }
-
 function buy(name, price) {
     if (currentUser.balance >= price) {
         currentUser.balance -= price;
@@ -239,3 +254,4 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
