@@ -1,4 +1,13 @@
-// 1. Загружаем данные: общие пользователи и общий магазин
+const firebaseConfig = {
+  apiKey: "AIzaSyCdxe_1o1qOe-Q0S9VqaanNt-ts-avioCc",
+  authDomain: "spinn-f9913.firebaseapp.com",
+  databaseURL: "https://spinn-f9913-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "spinn-f9913",
+  storageBucket: "spinn-f9913.firebasestorage.app",
+  messagingSenderId: "694847076025",
+  appId: "1:694847076025:web:e10ccd43890216b5200d68"
+};
+// общие пользователи и общий магазин
 let users = JSON.parse(localStorage.getItem('wheel_users')) || {};
 let globalShop = JSON.parse(localStorage.getItem('wheel_shop')) || [
     { name: 'Стартовый меч', price: 50 }
@@ -244,4 +253,5 @@ setInterval(() => {
     if (!isSpinning) { // Не обновляем во время кручения колеса, чтобы не сбить анимацию
         updateUI();
     }
+
 }, 3000); // Проверка раз в 3 секунды
