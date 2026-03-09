@@ -200,22 +200,27 @@ function updateUI() {
     }
 }
 function buy(name, price) {
-    console.log("Попытка покупки:", name, "Цена:", price); // ЭТОТ ЛОГ ПОКАЖЕТ, РАБОТАЕТ ЛИ КНОПКА
+    console.log("Попытка покупки:", name, "Цена:", price);
     
     if (currentUser.balance >= price) {
+        // 1. Локально меняем баланс
         currentUser.balance -= price;
         
-        // Обновляем данные пользователя в глобальном массиве
-        if (users[currentUser.username]) {
-            users[currentUser.username].balance = currentUser.balance;
-        }
+        // 2. ОБНОВЛЯЕМ ТОЛЬКО ЭТОГО ПОЛЬЗОВАТЕЛЯ В БАЗЕ
+        // Это гораздо надежнее, чем saveAll(), так как не трогает остальных
+        db.ref('users/' + currentUser.username).update({
+            balance: currentUser.balance
+        });
 
+        // 3. Добавляем заказ
         db.ref('orders').push({ 
             username: currentUser.username, 
-            item: name 
+            item: name,
+            timestamp: Date.now() // полезно для истории
         });
         
-        saveAll();
+        // 4. Обновляем интерфейс
+        updateUI();
         alert("Покупка совершена!");
     } else {
         alert("Недостаточно монет! Баланс: " + currentUser.balance);
@@ -289,6 +294,7 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
 
 
 
