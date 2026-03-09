@@ -22,11 +22,10 @@
         <section id="login-page" class="page active">
             <div class="card">
                 <h2>Вход в систему</h2>
-                <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;">Если вы впервые, придумайте ник и пароль</p>
                 <input type="text" id="username-input" placeholder="Никнейм">
                 <input type="password" id="password-input" placeholder="Пароль">
-                <p id="login-error" style="color: #ff4444; font-size: 0.8rem; display: none; margin-bottom: 10px;"></p>
-                <button class="btn-primary" onclick="login()">Войти / Создать</button>
+                <p id="login-error" style="color: #ff4444; font-size: 0.8rem; display: none;">Неверный пароль!</p>
+                <button class="btn-primary" onclick="login()">Войти</button>
             </div>
         </section>
 
@@ -34,42 +33,45 @@
             <div class="wheel-area">
                 <div class="wheel-pointer"></div>
                 <div id="wheel-canvas-container"></div>
-                <div class="wheel-center-decoration"></div>
             </div>
             <div class="wheel-controls">
                 <p>Спины: <strong id="spins">0</strong></p>
-                <button id="spin-btn" class="btn-spin" onclick="spin()">КРУТИТЬ</button>
-                <div id="spin-result"></div>
+                <button class="btn-spin" onclick="spin()">КРУТИТЬ</button>
             </div>
         </section>
 
         <section id="shop-page" class="page">
             <h2 class="page-title">Магазин</h2>
             <div id="shop-items-list" class="shop-grid"></div>
+            
+            <h2 class="page-title">Ваш инвентарь</h2>
+            <div id="inventory-list" class="shop-grid"></div>
         </section>
 
         <section id="admin-page" class="page">
             <h2 class="page-title">Управление</h2>
             
             <div class="card admin-card">
-                <h3>Баланс и валюта</h3>
-                <input type="text" id="admin-target-nick" placeholder="Никнейм игрока">
-                <input type="number" id="admin-amount" placeholder="Сумма (например: 100 или -50)">
+                <h3>Баланс и товары</h3>
+                <input type="text" id="admin-target-nick" placeholder="Ник игрока">
+                <input type="number" id="admin-amount" placeholder="Сумма">
                 <div class="admin-buttons">
-                    <button class="btn-secondary" onclick="adminAdjustBalance()">Применить 🪙</button>
-                    <button class="btn-secondary" onclick="adminCheckUser()" style="background: #444;">Проверить 🔍</button>
+                    <button class="btn-secondary" onclick="adminAdjustBalance()">Применить</button>
+                    <button class="btn-secondary" onclick="adminCheckUser()">Проверить</button>
                 </div>
-                <p id="admin-status" style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;"></p>
+                <p id="admin-status"></p>
+                
+                <hr style="opacity: 0.1; margin: 20px 0;">
+                
+                <input type="text" id="new-item-name" placeholder="Название товара">
+                <input type="number" id="new-item-price" placeholder="Цена">
+                <button class="btn-secondary" onclick="adminAddItem()">Добавить товар</button>
+                <div id="admin-shop-manage"></div>
             </div>
 
             <div class="card admin-card">
-                <h3>Товары и Спины</h3>
-                <button class="btn-secondary" onclick="adminGiveSpin()">+1 Спин игроку выше</button>
-                <hr style="opacity: 0.1; margin: 15px 0;">
-                <input type="text" id="new-item-name" placeholder="Название товара">
-                <input type="number" id="new-item-price" placeholder="Цена">
-                <button class="btn-secondary" onclick="adminAddItem()">Добавить в магазин</button>
-                <div id="admin-shop-manage"></div>
+                <h3>Заказы от игроков</h3>
+                <div id="admin-orders-list"></div>
             </div>
         </section>
     </main>
@@ -83,7 +85,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
     <script src="script.js"></script>
 </body>
 </html>
+
