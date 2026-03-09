@@ -80,19 +80,29 @@ function spin() {
 
     const wheelSvg = document.getElementById('wheel-svg');
     const winnerIdx = Math.floor(Math.random() * prizes.length);
-    currentRotation += 1800 + (360 - (winnerIdx * (360 / prizes.length)));
+    
+    // Рассчитываем угол так, чтобы сектор смотрел ровно вверх (на стрелку)
+    // Угол каждого сектора = 360 / кол-во призов
+    const anglePerPrize = 360 / prizes.length;
+    // Вычисляем целевой угол
+    const targetRotation = currentRotation + 1800 + (360 - (winnerIdx * anglePerPrize) - (anglePerPrize / 2));
+    
+    currentRotation = targetRotation;
     
     wheelSvg.style.transition = "transform 4s cubic-bezier(0.1, 0, 0.2, 1)";
     wheelSvg.style.transform = `rotate(${currentRotation}deg)`;
 
-    setTimeout(() => {
+    // Ждем окончания анимации
+    wheelSvg.addEventListener('transitionend', function handler() {
+        wheelSvg.removeEventListener('transitionend', handler);
         isSpinning = false;
+        
+        // ВЫДАЕМ НАГРАДУ ТОЛЬКО ПОСЛЕ АНИМАЦИИ
         currentUser.balance += prizes[winnerIdx].value;
         saveAll();
         alert(`Поздравляем! Вы выиграли ${prizes[winnerIdx].value} 🪙`);
-    }, 4000);
+    }, {once: true});
 }
-
 // Авторизация
 function login() {
     const name = document.getElementById('username-input').value.trim();
@@ -254,4 +264,5 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
 
