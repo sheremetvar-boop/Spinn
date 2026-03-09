@@ -200,33 +200,27 @@ function updateUI() {
     }
 }
 function buy(name, price) {
-    // 1. Проверяем баланс у текущего пользователя в локальном объекте
+    console.log("Попытка покупки:", name, "Цена:", price); // ЭТОТ ЛОГ ПОКАЖЕТ, РАБОТАЕТ ЛИ КНОПКА
+    
     if (currentUser.balance >= price) {
-        
-        // 2. Списываем баланс
         currentUser.balance -= price;
         
-        // 3. ОБЯЗАТЕЛЬНО обновляем баланс внутри глобального объекта users
-        // Иначе Firebase может перезаписать старое значение при синхронизации
+        // Обновляем данные пользователя в глобальном массиве
         if (users[currentUser.username]) {
             users[currentUser.username].balance = currentUser.balance;
         }
 
-        // 4. Добавляем заказ
         db.ref('orders').push({ 
             username: currentUser.username, 
             item: name 
         });
         
-        // 5. Сохраняем все данные в базу
         saveAll();
-        
         alert("Покупка совершена!");
     } else {
-        alert("Недостаточно монет");
+        alert("Недостаточно монет! Баланс: " + currentUser.balance);
     }
 }
-
 // Админка
 function checkAdmin() {
     if (prompt("Введите пароль администратора:") === "qws853") show('admin-page');
@@ -295,6 +289,7 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
 
 
 
