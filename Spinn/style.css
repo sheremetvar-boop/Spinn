@@ -1,0 +1,177 @@
+:root {
+    --primary: #6366f1;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+}
+
+.light-theme {
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #0f172a;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif; 
+    margin: 0;
+    background: var(--bg); 
+    color: var(--text);
+    transition: 0.3s; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden; /* Основной экран не скроллится */
+}
+
+header { 
+    background: var(--card); 
+    padding: 15px; 
+    border-bottom: 2px solid var(--primary); 
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.header-content { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    max-width: 500px; 
+    margin: 0 auto; 
+    width: 100%; 
+}
+
+.balance-badge { 
+    background: var(--primary); 
+    padding: 4px 12px; 
+    border-radius: 20px; 
+    font-weight: bold; 
+}
+
+/* ГЛАВНОЕ ИСПРАВЛЕНИЕ СКРОЛЛА */
+main {
+    flex: 1;
+    overflow-y: auto; /* Скролл теперь тут */
+    position: relative;
+}
+
+.page { 
+    display: none; 
+    padding: 20px; 
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 120px; /* Большой отступ снизу для навигации */
+}
+
+.page.active { 
+    display: block; 
+}
+
+.card { 
+    background: var(--card); 
+    padding: 20px; 
+    border-radius: 12px; 
+    margin-bottom: 15px; 
+    position: relative;
+}
+
+/* СПИСОК ТОВАРОВ В АДМИНКЕ */
+#admin-shop-manage {
+    margin-top: 15px;
+    max-height: 300px; 
+    overflow-y: auto;  
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.admin-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: var(--card);
+    margin-bottom: 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-item-row span {
+    font-size: 0.9rem;
+    word-break: break-word;
+    max-width: 70%;
+}
+
+/* КНОПКИ */
+.admin-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap; /* Чтобы на узких экранах кнопки переносились */
+}
+
+.btn-secondary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* SVG WHEEL */
+.wheel-area {
+    position: relative; width: 280px; height: 280px; margin: 20px auto;
+}
+#wheel-canvas-container { width: 100%; height: 100%; }
+#wheel-svg { width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(0,0,0,0.3)); }
+
+.wheel-pointer {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    width: 0; height: 0; border-left: 15px solid transparent;
+    border-right: 15px solid transparent; border-top: 30px solid #ef4444;
+    z-index: 10;
+}
+
+.btn-spin { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+/* НИЖНЕЕ МЕНЮ */
+.bottom-nav { 
+    position: fixed; 
+    bottom: 0; 
+    left: 0;
+    right: 0;
+    width: 100%; 
+    background: var(--card); 
+    display: flex; 
+    padding: 12px 0 28px; 
+    border-top: 1px solid rgba(255,255,255,0.1);
+    z-index: 100;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+}
+
+.nav-item { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    background: none; 
+    border: none; 
+    color: var(--text); 
+    cursor: pointer; 
+    font-size: 0.75rem;
+}
+
+input { 
+    width: 100%; 
+    padding: 12px; 
+    margin-bottom: 12px; 
+    border-radius: 8px; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    background: var(--bg); 
+    color: var(--text); 
+    box-sizing: border-box; 
+    font-family: inherit;
+}
