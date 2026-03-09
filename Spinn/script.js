@@ -47,7 +47,8 @@ function createWheel() {
     const container = document.getElementById('wheel-canvas-container');
     if (!container) return;
 
-    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100" style="width:100%; height:100%; transition: transform 4s cubic-bezier(0.1, 0, 0.2, 1);">`;
+    // Время анимации здесь же: 3 секунды для баланса скорости
+    let svg = `<svg id="wheel-svg" viewBox="0 0 100 100" style="width:100%; height:100%; transition: transform 3s cubic-bezier(0.2, 0.8, 0.3, 1);">`;
     let cumulativeAngle = 0;
 
     prizes.forEach((p) => {
@@ -56,18 +57,18 @@ function createWheel() {
         const end = start + segmentAngle;
 
         // Рисуем сектор
-        const x1 = 50 + 50 * Math.cos(start * Math.PI / 180);
-        const y1 = 50 + 50 * Math.sin(start * Math.PI / 180);
-        const x2 = 50 + 50 * Math.cos(end * Math.PI / 180);
-        const y2 = 50 + 50 * Math.sin(end * Math.PI / 180);
+        const x1 = 50 + 50 * Math.cos((start - 90) * Math.PI / 180);
+        const y1 = 50 + 50 * Math.sin((start - 90) * Math.PI / 180);
+        const x2 = 50 + 50 * Math.cos((end - 90) * Math.PI / 180);
+        const y2 = 50 + 50 * Math.sin((end - 90) * Math.PI / 180);
 
         svg += `<path d="M50,50 L${x1},${y1} A50,50 0 0,1 ${x2},${y2} Z" fill="${p.color}" stroke="white" stroke-width="0.5"/>`;
 
         // Текст
         const midAngle = start + segmentAngle / 2;
-        const tx = 50 + 35 * Math.cos(midAngle * Math.PI / 180);
-        const ty = 50 + 35 * Math.sin(midAngle * Math.PI / 180);
-        svg += `<text x="${tx}" y="${ty}" fill="white" font-size="5" text-anchor="middle" transform="rotate(${midAngle + 90}, ${tx}, ${ty})">${p.value}</text>`;
+        const tx = 50 + 35 * Math.cos((midAngle - 90) * Math.PI / 180);
+        const ty = 50 + 35 * Math.sin((midAngle - 90) * Math.PI / 180);
+        svg += `<text x="${tx}" y="${ty}" fill="white" font-size="5" text-anchor="middle" transform="rotate(${midAngle}, ${tx}, ${ty})">${p.value}</text>`;
 
         cumulativeAngle = end;
     });
@@ -81,28 +82,26 @@ function spin() {
     currentUser.spins--;
     saveAll();
 
-    // Выбор индекса по шансам
     const random = Math.random() * 100;
     let sum = 0;
     let winnerIdx = 0;
-    let startOfWinner = 0;
 
     for (let i = 0; i < prizes.length; i++) {
         if (random >= sum && random < sum + prizes[i].chance) {
             winnerIdx = i;
-            startOfWinner = sum;
             break;
         }
         sum += prizes[i].chance;
     }
 
-    // Расчет угла: стрелка сверху, значит целевой угол = 270 градусов (или 0 в зависимости от вращения)
-    // Упростим: нам нужно, чтобы центр сектора попал в верхнюю точку (270°)
+    // Вычисляем, на какой угол нужно повернуть, чтобы центр сектора winnerIdx встал вверх
+    let startAngle = 0;
+    for(let i = 0; i < winnerIdx; i++) startAngle += (prizes[i].chance / 100) * 360;
     const segmentAngle = (prizes[winnerIdx].chance / 100) * 360;
-    const targetAngle = startOfWinner + (segmentAngle / 2);
-    
-    // Вращение: 1800 (5 оборотов) + 270 (верх) - целевой угол
-    currentRotation = 1800 + 270 - targetAngle;
+    const targetAngle = startAngle + (segmentAngle / 2);
+
+    // 1800 (5 оборотов) + 360 - угол сектора
+    currentRotation = 1800 + (360 - targetAngle);
 
     const wheelSvg = document.getElementById('wheel-svg');
     wheelSvg.style.transform = `rotate(${currentRotation}deg)`;
@@ -112,7 +111,7 @@ function spin() {
         isSpinning = false;
         currentUser.balance += prizes[winnerIdx].value;
         saveAll();
-        alert(`Вы выиграли: ${prizes[winnerIdx].value} 🪙`);
+        alert(`Выиграли: ${prizes[winnerIdx].value} 🪙`);
     }, {once: true});
 }
 
@@ -277,6 +276,7 @@ function show(id) {
         console.error("Страница с id '" + id + "' не найдена!");
     }
 }
+
 
 
 
