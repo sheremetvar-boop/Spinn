@@ -5,90 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lucky Wheel App</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body class="dark-theme">
-
     <header>
         <div class="header-content">
             <div class="user-badge"><span id="user-display-name">Игрок</span></div>
-            <div class="header-right">
-                <div class="balance-badge"><span id="balance">0</span> 🪙</div>
-            </div>
+            <div class="balance-badge"><span id="balance">0</span> 🪙</div>
         </div>
     </header>
-
     <main id="app-container">
         <section id="login-page" class="page active">
             <div class="card">
-                <h2>Вход в систему</h2>
-                <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;">Если вы впервые, придумайте ник и пароль</p>
+                <h2>Вход</h2>
                 <input type="text" id="username-input" placeholder="Никнейм">
                 <input type="password" id="password-input" placeholder="Пароль">
-                <p id="login-error" style="color: #ff4444; font-size: 0.8rem; display: none; margin-bottom: 10px;"></p>
-                <button class="btn-primary" onclick="login()">Войти / Создать</button>
+                <button class="btn-primary" onclick="login()">Войти</button>
             </div>
         </section>
-
         <section id="wheel-page" class="page">
             <div class="wheel-area">
                 <div class="wheel-pointer"></div>
                 <div id="wheel-canvas-container"></div>
-                <div class="wheel-center-decoration"></div>
             </div>
             <div class="wheel-controls">
                 <p>Спины: <strong id="spins">0</strong></p>
                 <button id="spin-btn" class="btn-spin" onclick="spin()">КРУТИТЬ</button>
-                <div id="spin-result"></div>
             </div>
         </section>
-
         <section id="shop-page" class="page">
             <h2 class="page-title">Магазин</h2>
             <div id="shop-items-list" class="shop-grid"></div>
-            
-            <h2 class="page-title">Ваш инвентарь</h2>
-            <div id="inventory-list" class="shop-grid"></div>
+            <h2 class="page-title">Инвентарь</h2>
+            <div id="inventory-list"></div>
         </section>
-
         <section id="admin-page" class="page">
-            <h2 class="page-title">Управление</h2>
-            
-            <div class="card admin-card">
-                <h3>Баланс и валюта</h3>
-                <input type="text" id="admin-target-nick" placeholder="Никнейм игрока">
-                <input type="number" id="admin-amount" placeholder="Сумма (например: 100 или -50)">
-                <div class="admin-buttons">
-                    <button class="btn-secondary" onclick="adminAdjustBalance()">Применить 🪙</button>
-                    <button class="btn-secondary" onclick="adminCheckUser()" style="background: #444;">Проверить 🔍</button>
-                </div>
-                <p id="admin-status" style="margin-top: 10px; font-size: 0.8rem; font-weight: bold;"></p>
+            <h2>Админка</h2>
+            <div class="card">
+                <input type="text" id="admin-target-nick" placeholder="Ник игрока">
+                <input type="number" id="admin-amount" placeholder="Сумма">
+                <button onclick="adminAdjustBalance()">Применить</button>
+                <button onclick="adminGiveSpin()">+1 Спин</button>
+                <p id="admin-status"></p>
             </div>
-
-            <div class="card admin-card">
-                <h3>Товары и Спины</h3>
-                <button class="btn-secondary" onclick="adminGiveSpin()">+1 Спин игроку выше</button>
-                <hr style="opacity: 0.1; margin: 15px 0;">
-                <input type="text" id="new-item-name" placeholder="Название товара">
-                <input type="number" id="new-item-price" placeholder="Цена">
-                <button class="btn-secondary" onclick="adminAddItem()">Добавить в магазин</button>
-                <div id="admin-shop-manage"></div>
-            </div>
-
-            <div class="card admin-card">
-                <h3>Заказы от игроков</h3>
-                <div id="admin-orders-list"></div>
-            </div>
+            <h3>Заказы</h3>
+            <div id="admin-orders-list"></div>
         </section>
     </main>
-
     <nav id="main-nav" class="bottom-nav" style="display:none;">
-        <button onclick="show('wheel-page')" class="nav-item">🎡<span>Колесо</span></button>
-        <button onclick="show('shop-page')" class="nav-item">🛍️<span>Магазин</span></button>
-        <button onclick="checkAdmin()" class="nav-item">🔐<span>Админ</span></button>
-        <button onclick="logout()" class="nav-item">🚪<span>Выход</span></button>
+        <button onclick="show('wheel-page')">🎡</button>
+        <button onclick="show('shop-page')">🛍️</button>
+        <button onclick="checkAdmin()">🔐</button>
+        <button onclick="logout()">🚪</button>
     </nav>
-
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="script.js"></script>
